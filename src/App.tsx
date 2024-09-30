@@ -1,37 +1,80 @@
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useState } from "react";
 import "./App.css";
-import { useAppDispatch, useAppSelector } from "./app/hooks";
-import { increment } from "./app/store";
+import useGetSingleCycle from "./hooks";
+import type { SingleCycleAttributes } from "./services/endoflife";
 
-function App() {
-  const count = useAppSelector((state) => state.value);
-  const dispatch = useAppDispatch();
-
+const Eol = ({ cycle, product }: SingleCycleAttributes) => {
+  const { data, isError, isLoading } = useGetSingleCycle({
+    cycle: cycle.trim().toLowerCase(),
+    product: product.trim().toLocaleLowerCase(),
+  });
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        {isError ? (
+          <>Product not found from last query...</>
+        ) : isLoading ? (
+          <>Loading data...</>
+        ) : data ? (
+          <>
+            <h1>Product: {product}</h1>
+            <h2>Version Cycle: {data?.cycle ? data.cycle : cycle}</h2>
+            <h3>Release date: {data?.releaseDate}</h3>
+            <h4>Latest Version: {data?.latest}</h4>
+            <h5>LTS Support: {data?.lts?.toString()}</h5>
+          </>
+        ) : null}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button type="button" onClick={() => dispatch(increment(1))}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   );
-}
+};
+
+const App = () => {
+  const [formData, setFormData] = useState<SingleCycleAttributes>({
+    cycle: "",
+    product: "",
+  });
+
+  const [data, setData] = useState<SingleCycleAttributes>({
+    cycle: "3.9",
+    product: "python",
+  });
+
+  return (
+    <div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setData(formData);
+        }}
+      >
+        <label htmlFor="product">
+          <input
+            type="text"
+            id="product"
+            value={formData.product}
+            placeholder="Product"
+            onChange={(e) =>
+              setFormData({ cycle: formData.cycle, product: e.target.value })
+            }
+          />
+        </label>
+        <label htmlFor="cycle">
+          <input
+            type="text"
+            id="cycle"
+            value={formData.cycle}
+            placeholder="Cycle"
+            onChange={(e) =>
+              setFormData({ product: formData.product, cycle: e.target.value })
+            }
+          />
+        </label>
+        <button type="submit">Search Cycle</button>{" "}
+      </form>
+      <Eol cycle={data.cycle} product={data.product} />
+    </div>
+  );
+};
 
 export default App;
