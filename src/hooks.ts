@@ -1,31 +1,18 @@
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchSingleCycle,
-  selectDataByName,
-  selectStatusByName,
-  type SingleCycleAttributes,
-} from "./services/endoflife";
-import type store from "./store";
-import type { RootState } from "./store";
+import { fetchTodos } from "./services/todosSlice";
+import store, { selectAllTodos, useAppDispatch, useAppSelector } from "./store";
 
-const useGetSingleCycle = ({ cycle, product }: SingleCycleAttributes) => {
-  const dispatch = useDispatch<typeof store.dispatch>();
-  const status = useSelector((state: RootState) =>
-    selectStatusByName(state, product)
-  );
-  const data = useSelector((state: RootState) =>
-    selectDataByName(state, product)
-  );
-
+const useFetchAllTodos = () => {
+  const dispatch = useAppDispatch();
+  const status = useAppSelector((state) => state.todos.status);
+  const data = selectAllTodos(store.getState());
   if (status === undefined) {
-    dispatch(fetchSingleCycle({ cycle, product }));
+    dispatch(fetchTodos());
   }
-
-  const isUninitialised = status === undefined;
-  const isLoading = status === "pending" || status === undefined;
-  const isError = status === "rejected";
+  const isLoading = status === "pending";
+  const isError = status === "failed";
   const isSuccess = status === "fulfilled";
-  return { data, isUninitialised, isLoading, isError, isSuccess };
+  const isIdle = status === "idle";
+  return { data, isLoading, isError, isSuccess, isIdle };
 };
 
-export default useGetSingleCycle;
+export { useFetchAllTodos };
